@@ -22,5 +22,5 @@ server:
   port: 8080
 
 jwt:
-  secret-key: mi-clave-super-secreta-para-el-examen
+  secret: "inventario-activos-tecnologicos-jwt-secret-key-2026-admin-user"
   expiration: 86400000
