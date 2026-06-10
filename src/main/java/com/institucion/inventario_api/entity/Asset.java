@@ -44,7 +44,7 @@ public class Asset {
     @Column(precision = 12, scale = 2)
     private BigDecimal purchaseValue;
 
-    private LocalDate acquisitionDate;
+    private LocalDateTime acquisitionDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(

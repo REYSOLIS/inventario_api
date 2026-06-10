@@ -1,19 +1,28 @@
 package com.institucion.inventario_api.service;
 
+import java.math.BigDecimal;
 import java.time.Year;
 import java.util.List;
 
 import org.apache.el.stream.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.institucion.inventario_api.dto.ApiResponse;
+import com.institucion.inventario_api.dto.AssetListResponse;
 import com.institucion.inventario_api.dto.AssetRequest;
 import com.institucion.inventario_api.dto.AssetResponse;
+import com.institucion.inventario_api.dto.AssetSearchRequest;
+import com.institucion.inventario_api.dto.CategoryResponse;
+import com.institucion.inventario_api.dto.PageResponse;
 import com.institucion.inventario_api.entity.Asset;
 import com.institucion.inventario_api.entity.Category;
 import com.institucion.inventario_api.exception.BadRequestException;
 import com.institucion.inventario_api.exception.ResourceNotFoundException;
 import com.institucion.inventario_api.repository.AssetRepository;
 import com.institucion.inventario_api.repository.CategoryRepository;
+import com.institucion.inventario_api.utils.enums.AssetStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,7 +35,7 @@ public class AssetServiceImpl implements AssetService {
     private final CategoryRepository categoryRepository;
 
     @Override
-    public AssetResponse create(AssetRequest request) {
+    public ApiResponse<AssetResponse> create(AssetRequest request) {
 
         if (request.getSerialNumber() != null
                 && assetRepository.existsBySerialNumber(
@@ -59,16 +68,29 @@ public class AssetServiceImpl implements AssetService {
         Asset savedAsset =
                 assetRepository.save(asset);
 
-        return mapToResponse(savedAsset);
+        //return mapToResponse(savedAsset);
+
+        return 
+            ApiResponse.<AssetResponse>builder()
+                    .status(200)
+                    .message("registro exitoso")
+                    .data(mapToResponse(savedAsset))
+                    .build();
     }
 
     @Override
-    public List<AssetResponse> findAll() {
+    public AssetListResponse findAll() {
 
-        return assetRepository.findAll()
+        List<AssetResponse> listAssets = assetRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+
+        AssetListResponse response = new AssetListResponse();
+
+        response.setAssets(listAssets);
+
+        return response;
     }
 
     @Override
@@ -81,6 +103,75 @@ public class AssetServiceImpl implements AssetService {
                                 "Activo no encontrado"));
 
         return mapToResponse(asset);
+    }
+
+    @Override
+    public AssetResponse findBySerialNumber(String serialNumber) {
+
+        Asset asset = assetRepository
+        .findBySerialNumber(serialNumber)
+        .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Activo no encontrado"));
+
+        return mapToResponse(asset);
+    }
+
+    @Override
+    public AssetResponse findByModel(String model) {
+
+        Asset asset = assetRepository
+        .findByModel(model)
+        .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Activo no encontrado"));
+
+        return mapToResponse(asset);
+    }
+
+    @Override
+    public AssetListResponse findByCategoryId(Long id) {
+        
+        List<AssetResponse> listAssets = assetRepository.findByCategoryId(id)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+
+        AssetListResponse response = new AssetListResponse();
+
+        response.setAssets(listAssets);
+
+        return response;
+    }
+
+    @Override
+    public AssetListResponse findByStatus(AssetStatus status) {
+
+        List<AssetResponse> listAssets = assetRepository.findByStatus(status)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+
+        AssetListResponse response = new AssetListResponse();
+
+        response.setAssets(listAssets);
+
+        return response;
+    }
+
+    @Override
+    public AssetListResponse findByPurchaseValue(BigDecimal purchaseValue) {
+
+        List<AssetResponse> listAssets = assetRepository.findByPurchaseValue(purchaseValue)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+
+        AssetListResponse response = new AssetListResponse();
+
+        response.setAssets(listAssets);
+
+        return response;
     }
 
     @Override
@@ -153,4 +244,32 @@ public class AssetServiceImpl implements AssetService {
 
         return String.format("%03d", consecutivo);
     }
+
+    @Override
+    public PageResponse<AssetResponse> searchAssets(
+                AssetSearchRequest request,
+                Pageable pageable) {
+
+        Page<AssetResponse> page = assetRepository.searchAssets(
+                request.serialNumber(),
+                request.model(),
+                request.status(),
+                request.categoryId(),
+                request.minPurchaseValue(),
+                request.maxPurchaseValue(),
+                pageable
+        );
+
+        return new PageResponse<>(
+                page.getContent(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isFirst(),
+                page.isLast(),
+                page.isEmpty(),
+                page.getSort().toString()
+        );
+  }
 }

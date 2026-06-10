@@ -2,6 +2,7 @@ package com.institucion.inventario_api.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.institucion.inventario_api.utils.enums.AssetStatus;
 
@@ -21,6 +22,7 @@ public class AssetResponse {
     private String model;
     private AssetStatus status;
     private BigDecimal purchaseValue;
-    private LocalDate acquisitionDate;
+    private LocalDateTime acquisitionDate;
     private Long categoryId;
+    private String name;
 }
